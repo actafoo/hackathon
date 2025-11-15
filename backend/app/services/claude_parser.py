@@ -84,8 +84,17 @@ class ClaudeMessageParser:
     "end_date": "YYYY-MM-DD (종료 날짜, 기간인 경우만. 단일 날짜면 null)",
     "attendance_type": "결석" 또는 "지각" 또는 "조퇴" (update/cancel인 경우 null 가능),
     "attendance_reason": "질병" 또는 "미인정" 또는 "출석인정" (update/cancel인 경우 null 가능),
-    "confidence": 0.0~1.0
+    "confidence": 0.0~1.0 (신뢰도)
 }}
+
+**신뢰도(confidence) 판단 기준 (매우 중요!):**
+- **0.9-1.0**: 모든 정보가 명확하고 확실함 (예: "홍길동 아파서 오늘 결석합니다")
+- **0.7-0.9**: 대부분 정보가 명확하지만 일부 추론이 필요함 (예: "길동이 아파요" - 성이 없음)
+- **0.5-0.7**: 중요한 정보가 불명확하거나 추측이 많이 필요함 (예: "아파요" - 학생 이름 없음)
+- **0.3-0.5**: 대부분 정보를 추측해야 함
+- **0.0-0.3**: 거의 확신할 수 없음
+
+**중요**: 학생 이름이나 출결 타입이 명확하지 않으면 신뢰도를 0.7 미만으로 낮춰주세요!
 
 **예시:**
 
@@ -152,9 +161,21 @@ class ClaudeMessageParser:
             # JSON 파싱
             data = json.loads(response_text)
 
-            # 신뢰도 체크 (더 유연하게)
-            if data.get("confidence", 0) < 0.3:
-                return None, "메시지에서 출결 정보를 찾을 수 없습니다. 학생 이름과 상황을 알려주세요."
+            # 신뢰도 체크 (엄격하게)
+            confidence = data.get("confidence", 0)
+
+            if confidence < 0.7:
+                # 신뢰도가 낮은 경우 구체적인 안내 제공
+                missing_info = []
+                if not data.get("student_name"):
+                    missing_info.append("학생 이름")
+                if not data.get("attendance_type"):
+                    missing_info.append("출결 상황 (결석/지각/조퇴)")
+
+                if missing_info:
+                    return None, f"다음 정보가 명확하지 않습니다: {', '.join(missing_info)}\n\n좀 더 명확하게 알려주세요.\n예: '홍길동 아파서 결석', '김철수 늦어서 지각'"
+                else:
+                    return None, "메시지 내용이 명확하지 않습니다.\n\n학생 이름과 상황을 자세히 알려주세요.\n예: '홍길동 아파요', '김철수 늦습니다'"
 
             # 데이터 검증
             extracted_data = ExtractedAttendanceData(**data)
