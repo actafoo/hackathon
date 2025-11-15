@@ -11,7 +11,13 @@
       "Bash(wget:*)",
       "Bash(python3:*)",
       "Bash(lsof:*)",
-      "Bash(xargs kill:*)"
+      "Bash(xargs kill:*)",
+      "Bash(git commit:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(brew install:*)",
+      "Bash(railway login:*)",
+      "Bash(chmod:*)"
     ],
     "deny": [],
     "ask": []
