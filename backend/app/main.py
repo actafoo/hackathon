@@ -1,8 +1,14 @@
+import os
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from .database import init_db
 from .api.routes import students, attendance, documents, parents
+
+# uploads 디렉토리 생성 (앱 시작 전)
+UPLOADS_DIR = Path("uploads")
+UPLOADS_DIR.mkdir(exist_ok=True)
 
 # FastAPI 앱 생성
 app = FastAPI(
@@ -26,14 +32,15 @@ app.include_router(attendance.router, prefix="/api")
 app.include_router(documents.router, prefix="/api")
 app.include_router(parents.router, prefix="/api")
 
-# 정적 파일 서빙 (서류 사진)
-app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
-
 
 @app.on_event("startup")
 def on_startup():
     """앱 시작 시 데이터베이스 초기화"""
     init_db()
+
+
+# 정적 파일 서빙 (서류 사진) - startup 이후에 마운트되도록 보장
+app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 
 
 @app.get("/")
