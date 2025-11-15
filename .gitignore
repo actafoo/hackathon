@@ -67,3 +67,6 @@ comprehensive_bot_test.py
 
 # Telegram bot process files
 *.pid
+
+# Claude Code settings
+.claude/
