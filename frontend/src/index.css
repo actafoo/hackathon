@@ -1,0 +1,811 @@
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #333;
+  min-height: 100vh;
+}
+
+/* 모달이 열렸을 때 배경 스크롤 방지 */
+body.modal-open {
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+  height: 100%;
+}
+
+.app {
+  min-height: 100vh;
+  padding: 16px;
+  max-width: 1800px;
+  margin: 0 auto;
+}
+
+.header {
+  background: white;
+  padding: 20px 24px;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  margin-bottom: 16px;
+  animation: slideDown 0.4s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.header-title h1 {
+  font-size: 32px;
+  margin-bottom: 4px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  font-weight: 700;
+}
+
+.header-subtitle {
+  color: #6c757d;
+  font-size: 14px;
+  margin: 0;
+}
+
+.month-selector {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  background: #f8f9fa;
+  padding: 8px 12px;
+  border-radius: 12px;
+}
+
+.month-selector select {
+  padding: 10px 16px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  background: white;
+  transition: all 0.2s;
+}
+
+.month-selector select:hover {
+  border-color: #667eea;
+}
+
+.month-selector select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.btn-query {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+}
+
+.btn-query:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(102, 126, 234, 0.4);
+}
+
+.btn-query:active {
+  transform: translateY(0);
+}
+
+/* 통계 카드 */
+.stats-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stat-card {
+  background: white;
+  padding: 16px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  transition: all 0.3s;
+  border-left: 3px solid;
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.stat-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.stat-content {
+  flex: 1;
+}
+
+.stat-value {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6c757d;
+  font-weight: 500;
+}
+
+.stat-card-primary {
+  border-left-color: #667eea;
+}
+
+.stat-card-primary .stat-value {
+  color: #667eea;
+}
+
+.stat-card-info {
+  border-left-color: #17a2b8;
+}
+
+.stat-card-info .stat-value {
+  color: #17a2b8;
+}
+
+.stat-card-warning {
+  border-left-color: #ffc107;
+}
+
+.stat-card-warning .stat-value {
+  color: #ffc107;
+}
+
+.stat-card-success {
+  border-left-color: #28a745;
+}
+
+.stat-card-success .stat-value {
+  color: #28a745;
+}
+
+.stat-card-danger {
+  border-left-color: #dc3545;
+}
+
+.stat-card-danger .stat-value {
+  color: #dc3545;
+}
+
+.grid-container {
+  background: white;
+  padding: 20px;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+  overflow-x: auto;
+  overflow-y: visible;
+  animation: fadeIn 0.6s ease-out 0.2s both;
+  /* 별도 스크롤 없이 전체 페이지 스크롤 */
+  position: relative;
+  /* 모달이 독립적으로 렌더링되도록 설정 */
+}
+
+.attendance-grid {
+  min-width: 1200px;
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+}
+
+.attendance-grid th,
+.attendance-grid td {
+  border: 1px solid #ddd;
+  padding: 6px 4px;
+  text-align: center;
+  min-width: 36px;
+  font-size: 13px;
+}
+
+.attendance-grid th {
+  background-color: #f8f9fa;
+  font-weight: 600;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  padding: 6px 4px;
+  font-size: 12px;
+}
+
+.attendance-grid th:first-child,
+.attendance-grid td:first-child {
+  position: sticky;
+  left: 0;
+  background-color: white;
+  font-weight: 500;
+  min-width: 90px;
+  z-index: 5;
+  text-align: left;
+  padding-left: 8px;
+}
+
+.attendance-grid th:first-child {
+  z-index: 15;
+  background-color: #f8f9fa;
+}
+
+.attendance-cell {
+  cursor: pointer;
+  position: relative;
+  padding: 4px !important;
+}
+
+.attendance-cell:hover {
+  opacity: 0.8;
+  transform: scale(1.05);
+  transition: all 0.2s;
+}
+
+.cell-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-height: 42px;
+  justify-content: center;
+  padding: 2px;
+}
+
+.symbol-large {
+  font-size: 18px;
+  font-weight: bold;
+  line-height: 1;
+}
+
+/* 승인 상태별 배경색 - 더 진하고 명확하게 */
+.attendance-cell.status-대기,
+.attendance-cell.status-pending {
+  background-color: #fff3cd !important;
+  border: 3px solid #ffc107 !important;
+}
+
+.attendance-cell.status-승인,
+.attendance-cell.status-approved {
+  background-color: #d4edda !important;
+  border: 3px solid #28a745 !important;
+}
+
+.attendance-cell.status-거부,
+.attendance-cell.status-rejected {
+  background-color: #f8d7da !important;
+  border: 3px solid #dc3545 !important;
+}
+
+.attendance-cell.status-수정됨,
+.attendance-cell.status-modified {
+  background-color: #d1ecf1 !important;
+  border: 3px solid #17a2b8 !important;
+}
+
+/* 승인 상태 배지 */
+.approval-badge {
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  font-weight: bold;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.badge-pending {
+  background-color: #ffc107;
+  color: #000;
+}
+
+.badge-approved {
+  background-color: #28a745;
+  color: white;
+}
+
+.badge-rejected {
+  background-color: #dc3545;
+  color: white;
+}
+
+.badge-modified {
+  background-color: #17a2b8;
+  color: white;
+}
+
+
+.weekend {
+  background-color: #f8f9fa !important;
+}
+
+/* 서류 제출 아이콘 */
+.doc-icon {
+  font-size: 12px;
+  line-height: 1;
+}
+
+.doc-submitted {
+  color: #28a745;
+  filter: drop-shadow(0 0 2px #28a745);
+}
+
+.doc-needed {
+  color: #dc3545;
+  filter: drop-shadow(0 0 2px #dc3545);
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.modal {
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(0,0,0,0.5);
+  backdrop-filter: blur(3px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999 !important;
+  animation: fadeIn 0.3s ease-out;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 20px;
+  /* 배경 스크롤 방지를 위해 body에 적용될 클래스가 필요 */
+  /* 모든 부모 제약에서 완전히 독립 */
+  margin: 0 !important;
+}
+
+.modal-content {
+  background: white;
+  padding: 24px;
+  border-radius: 16px;
+  max-width: 800px;
+  width: 95%;
+  max-height: calc(100vh - 60px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  animation: slideUp 0.3s ease-out;
+  margin: auto !important;
+  /* 부드러운 스크롤 */
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  position: relative;
+}
+
+/* 큰 모달 (학생 관리 등) */
+.modal-content.modal-large {
+  max-width: 75vw !important;
+  max-height: 80vh !important;
+  width: 75vw !important;
+  height: auto !important;
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.modal-large .modal-body {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 16px;
+}
+
+.modal-content.modal-large .modal-header {
+  flex-shrink: 0;
+}
+
+.modal-content.modal-large .modal-actions {
+  flex-shrink: 0;
+}
+
+/* 모달 내부 스크롤바 스타일 */
+.modal-content::-webkit-scrollbar,
+.modal-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-track,
+.modal-body::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb,
+.modal-body::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover,
+.modal-body::-webkit-scrollbar-thumb:hover {
+  background: #a1a1a1;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.modal-header {
+  font-size: 20px;
+  font-weight: 700;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid #f0f0f0;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.modal-body {
+  margin-bottom: 16px;
+}
+
+.form-group {
+  margin-bottom: 14px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 600;
+  color: #333;
+  font-size: 13px;
+}
+
+.form-group select,
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 10px 14px;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  font-size: 13px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+
+.form-group select:focus,
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.3s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.btn:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  font-size: 16px;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #0056b3 0%, #004085 100%);
+}
+
+.btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #218838 100%);
+  color: white;
+}
+
+.btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1e7e34 100%);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #c82333 0%, #bd2130 100%);
+}
+
+.btn-secondary {
+  background: linear-gradient(135deg, #6c757d 0%, #5a6268 100%);
+  color: white;
+}
+
+.btn-secondary:hover {
+  background: linear-gradient(135deg, #5a6268 0%, #545b62 100%);
+}
+
+.btn-small {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.loading {
+  text-align: center;
+  padding: 60px 40px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+}
+
+.loading-spinner {
+  width: 50px;
+  height: 50px;
+  margin: 0 auto 20px;
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #667eea;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading p {
+  font-size: 16px;
+  color: #6c757d;
+  margin: 0;
+}
+
+.error {
+  background: linear-gradient(135deg, #f8d7da 0%, #f5c2c7 100%);
+  color: #721c24;
+  padding: 16px 20px;
+  border-radius: 12px;
+  margin-bottom: 20px;
+  border-left: 4px solid #dc3545;
+  box-shadow: 0 4px 12px rgba(220, 53, 69, 0.15);
+  font-weight: 500;
+}
+
+.actions-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  flex-wrap: wrap;
+  animation: fadeIn 0.5s ease-out 0.1s both;
+}
+
+/* 반응형 디자인 */
+@media (max-width: 768px) {
+  .app {
+    padding: 16px;
+  }
+
+  .header {
+    padding: 20px;
+  }
+
+  .header-title h1 {
+    font-size: 24px;
+  }
+
+  .header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .month-selector {
+    justify-content: center;
+  }
+
+  .stats-container {
+    grid-template-columns: 1fr;
+  }
+
+  .stat-card {
+    padding: 20px;
+  }
+
+  .stat-value {
+    font-size: 28px;
+  }
+
+  .actions-bar {
+    flex-direction: column;
+  }
+
+  .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+/* 스크롤바 스타일링 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+
+/* 인쇄 스타일 */
+@media print {
+  /* 배경 제거 */
+  body {
+    background: white !important;
+  }
+
+  /* 헤더, 통계, 액션바 숨기기 */
+  .header,
+  .stats-container,
+  .actions-bar {
+    display: none !important;
+  }
+
+  /* 앱 패딩 제거 */
+  .app {
+    padding: 0 !important;
+    max-width: 100% !important;
+  }
+
+  /* 그리드 컨테이너 최적화 */
+  .grid-container {
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    padding: 10px !important;
+    margin: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* 출결 테이블 최적화 */
+  .attendance-grid {
+    min-width: 100% !important;
+    page-break-inside: avoid;
+  }
+
+  .attendance-grid th,
+  .attendance-grid td {
+    padding: 4px !important;
+    font-size: 10px !important;
+    border: 1px solid #000 !important;
+  }
+
+  /* 셀 배경색 흑백으로 */
+  .attendance-cell.status-대기,
+  .attendance-cell.status-pending {
+    background-color: #f5f5f5 !important;
+    border: 1px solid #999 !important;
+  }
+
+  .attendance-cell.status-승인,
+  .attendance-cell.status-approved {
+    background-color: #e0e0e0 !important;
+    border: 1px solid #666 !important;
+  }
+
+  .attendance-cell.status-거부,
+  .attendance-cell.status-rejected {
+    background-color: #d0d0d0 !important;
+    border: 1px solid #333 !important;
+  }
+
+  /* 안내 박스 간소화 */
+  .grid-container > div:first-child {
+    font-size: 8px !important;
+    padding: 5px !important;
+  }
+
+  /* 모달 숨기기 */
+  .modal {
+    display: none !important;
+  }
+
+  /* 페이지 설정 */
+  @page {
+    size: landscape;
+    margin: 10mm;
+  }
+}
