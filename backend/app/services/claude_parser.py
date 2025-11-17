@@ -15,12 +15,17 @@ class ClaudeMessageParser:
             raise ValueError("ANTHROPIC_API_KEY environment variable is required")
         self.client = Anthropic(api_key=api_key)
 
-    def parse_attendance_message(self, message: str) -> tuple[Optional[ExtractedAttendanceData], Optional[str]]:
+    def parse_attendance_message(self, message: str, context: dict = None) -> tuple[Optional[ExtractedAttendanceData], Optional[str]]:
         """
         텔레그램 메시지에서 출결 정보 추출
 
         Args:
             message: 텔레그램 메시지 원문
+            context: 이전 대화 맥락 (선택)
+                {
+                    'messages': [{'text': '...', 'timestamp': ...}],
+                    'partial_data': {'student_name': '...', ...}
+                }
 
         Returns:
             (추출된 데이터, 에러 메시지)
@@ -36,7 +41,31 @@ class ClaudeMessageParser:
         weekday_names = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
         today_weekday = weekday_names[today.weekday()]
 
+        # 대화 맥락 처리
+        context_info = ""
+        has_context = False
+        partial_data = context.get('partial_data', {}) if context else {}
+
+        if context and context.get('messages'):
+            has_context = True
+            context_info = "\n\n## 🔄 대화 맥락이 있습니다 - 이전 정보와 현재 메시지를 합쳐주세요!\n\n"
+            context_info += "**이전 대화 내용:**\n"
+            for msg in context['messages'][-3:]:  # 최근 3개 메시지만
+                context_info += f"- {msg['text']}\n"
+            context_info += f"\n**현재 메시지**: {message}\n"
+
+        if partial_data:
+            has_context = True
+            context_info += f"\n**이미 알고 있는 정보 (반드시 유지하세요!):**\n"
+            context_info += f"```json\n{json.dumps(partial_data, ensure_ascii=False, indent=2)}\n```\n"
+            context_info += "\n**⚠️ 매우 중요:**\n"
+            context_info += "1. 위의 '이미 알고 있는 정보'에서 null이 아닌 값들은 **반드시 그대로 유지**하세요\n"
+            context_info += "2. 현재 메시지에서 **새로운 정보(사유, 날짜 등)를 추출**하여 null 필드만 채우세요\n"
+            context_info += "3. 현재 메시지가 짧더라도, 이전 정보와 결합하면 완전한 데이터가 됩니다\n"
+            context_info += "4. 이전 정보의 student_name, date, attendance_type 등을 **절대 null로 만들지 마세요**\n\n"
+
         prompt = f"""당신은 초등학교 출결 관리 시스템입니다. 학부모/학생이 보낸 메시지를 읽고 출결 정보를 파악해주세요.
+{context_info}
 
 **오늘 날짜**: {today_str} ({today_weekday})
 **내일 날짜**: {tomorrow_str}
@@ -45,24 +74,35 @@ class ClaudeMessageParser:
 
 ---
 
-## 출결 분류 체계
+## 출결 분류 체계 (⚠️ 매우 중요!)
 
-출결은 **타입 × 사유 = 9가지 조합**으로 구성됩니다:
+출결은 **두 개의 독립적인 필드**로 구성됩니다:
+- **attendance_type** (타입): 무엇을 하는가? (결석/지각/조퇴)
+- **attendance_reason** (사유): 왜 그러는가? (질병/출석인정/미인정)
 
-### 출결 타입 (3가지)
+⚠️ **절대로 헷갈리지 마세요:**
+- "아파요" → attendance_type: "결석", attendance_reason: "질병"
+- "질병"은 타입이 아니라 **사유**입니다!
+- attendance_type은 **반드시** "결석", "지각", "조퇴" 중 하나여야 합니다!
+
+### 출결 타입 (attendance_type) - 3가지만 가능
 1. **결석**: 하루 종일 학교에 오지 않음
 2. **지각**: 늦게 등교함
 3. **조퇴**: 수업 중간에 일찍 하교함
 
-### 출결 사유 (3가지)
+⚠️ **주의**: attendance_type은 "질병", "출석인정", "미인정"이 절대 될 수 없습니다!
+
+### 출결 사유 (attendance_reason) - 3가지만 가능
 1. **질병**: 아픔, 병원 방문, 감기, 몸살, 열, 배탈 등 건강 문제
 2. **출석인정**: 현장체험학습, 체험학습, 가족여행, 법정감염병, 조부모 제사 등 공식적으로 인정되는 사유
 3. **미인정**: 개인 사정, 늦잠, 무단 등 기타 사유
 
-### 9가지 조합
-- 질병결석, 질병지각, 질병조퇴
-- 출석인정결석, 출석인정지각, 출석인정조퇴
-- 미인정결석, 미인정지각, 미인정조퇴
+### 예시: 9가지 조합 (타입 × 사유)
+- "아파서 결석" → 타입:결석 + 사유:질병 = 질병결석
+- "아파서 지각" → 타입:지각 + 사유:질병 = 질병지각
+- "아파서 조퇴" → 타입:조퇴 + 사유:질병 = 질병조퇴
+- "체험학습으로 결석" → 타입:결석 + 사유:출석인정 = 출석인정결석
+- "늦잠 자서 지각" → 타입:지각 + 사유:미인정 = 미인정지각
 
 ---
 
@@ -94,11 +134,22 @@ class ClaudeMessageParser:
    - 날짜 언급 없으면 → {today_str}
    - 기간("내일부터 3일간") → date와 end_date 모두 설정
 
-3. **출결 타입 자연스럽게 판단**:
-   - 하루 종일 학교에 안 오는 상황 → **결석**
-   - 늦게 오는 상황 → **지각**
-   - 중간에 일찍 가는 상황 → **조퇴**
-   - **"3교시 끝나고", "점심시간에", "오후에 가야", "수업 끝나고" → 조퇴**
+3. **출결 타입 정확하게 판단 (매우 중요!):**
+
+   **결석** (학교에 안 옴, 하루 종일 없음):
+   - "결석", "못 가요", "안 가요", "쉬어요", "학교 안 가요"
+   - 예: "홍길동 오늘 결석", "아파서 못 가요"
+
+   **지각** (늦게 등교함, 늦게 도착):
+   - **"지각", "늦습니다", "늦게 가요", "늦게 와요", "늦어요"**
+   - ⚠️ 핵심: 등교는 하지만 **늦게 도착**하는 것
+   - 예: "주선이 지각해요", "늦게 갈게요", "10시에 등교합니다"
+
+   **조퇴** (일찍 하교함, 수업 중 떠남):
+   - "조퇴", "일찍 가요", "먼저 가요", "빼주세요"
+   - "3교시 끝나고", "점심시간에", "오후에", "수업 끝나고"
+   - ⚠️ 핵심: 등교는 했지만 **수업 중에 일찍 집에 감**
+   - 예: "3교시 끝나고 조퇴", "점심 먹고 가야 해요"
 
 4. **출결 사유 신중하게 판단**:
    - **명확한 질병 표현**("아파요", "병원", "감기", "열") → 질병
@@ -132,14 +183,44 @@ class ClaudeMessageParser:
 
 ## 중요 원칙
 
-1. **맥락을 자연스럽게 읽고 이해하세요**
-2. **불확실하면 추측하지 말고 추가 질문하세요**
-3. **사유가 명확하지 않으면 반드시 clarification_needed: true**
-4. **예시의 이름을 사용하지 말고 메시지에서 직접 추출하세요**
+1. **대화 맥락이 있으면 반드시 이전 정보를 유지하세요 (null이 아닌 값들은 절대 지우지 말 것!)**
+2. **맥락을 자연스럽게 읽고 이해하세요**
+3. **불확실하면 추측하지 말고 추가 질문하세요**
+4. **사유가 명확하지 않으면 반드시 clarification_needed: true**
+5. **예시의 이름을 사용하지 말고 메시지에서 직접 추출하세요**
 
 ---
 
 ## 예시
+
+### 예시 1: 대화 맥락 - 이전 정보 유지 (매우 중요!)
+
+**이미 알고 있는 정보**:
+```json
+{{
+  "student_name": "주선",
+  "date": "2025-11-18",
+  "attendance_type": "지각",
+  "attendance_reason": null
+}}
+```
+
+**현재 메시지**: "병원 가야 해서요"
+
+**출력** (이전 정보 유지 + 새 정보 추가):
+{{
+    "intent": "create",
+    "student_name": "주선",
+    "date": "2025-11-18",
+    "end_date": null,
+    "attendance_type": "지각",
+    "attendance_reason": "질병",
+    "confidence": 0.95,
+    "clarification_needed": false,
+    "clarification_question": null
+}}
+
+### 예시 2: 기본 예시
 
 **입력**: "주선이 내일 3교시 끝나고 조퇴할게요"
 **출력**:
@@ -155,6 +236,39 @@ class ClaudeMessageParser:
     "clarification_question": "조퇴 사유를 알려주시겠어요? (예: 아파서, 병원 가야 해서, 개인 사정)"
 }}
 
+### 예시 3: 지각 (늦게 등교)
+
+**입력**: "주선이 다음주 화요일에 지각해요"
+**출력**:
+{{
+    "intent": "create",
+    "student_name": "주선",
+    "date": "2025-11-18",
+    "end_date": null,
+    "attendance_type": "지각",
+    "attendance_reason": null,
+    "confidence": 0.6,
+    "clarification_needed": true,
+    "clarification_question": "지각 사유를 알려주시겠어요? (예: 아파서, 병원 가야 해서, 개인 사정)"
+}}
+
+### 예시 4: 결석 (주의: 타입 vs 사유 구분!)
+
+**입력**: "주선이 오늘 아파요"
+**출력**:
+{{
+    "intent": "create",
+    "student_name": "주선",
+    "date": "{today_str}",
+    "end_date": null,
+    "attendance_type": "결석",
+    "attendance_reason": "질병",
+    "confidence": 0.9,
+    "clarification_needed": false,
+    "clarification_question": null
+}}
+⚠️ **주의**: "아파요"는 결석의 **사유(질병)**이지 **타입**이 아닙니다!
+
 **입력**: "홍길동 아파서 결석입니다"
 **출력**:
 {{
@@ -168,6 +282,8 @@ class ClaudeMessageParser:
     "clarification_needed": false,
     "clarification_question": null
 }}
+
+### 예시 5: 체험학습
 
 **입력**: "김철수 체험학습으로 내일부터 3일간 결석"
 **출력**:

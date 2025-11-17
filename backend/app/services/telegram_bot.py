@@ -1,6 +1,6 @@
 import os
 import logging
-from datetime import datetime
+from datetime import datetime, timedelta
 from telegram import Update
 from telegram.ext import Application, CommandHandler, MessageHandler, filters, ContextTypes
 from sqlalchemy.orm import Session
@@ -16,6 +16,59 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class ConversationSession:
+    """대화 세션 관리"""
+    def __init__(self):
+        self.sessions = {}  # telegram_user_id -> session_data
+
+    def get_or_create(self, user_id: str):
+        """세션 가져오기 또는 생성"""
+        if user_id not in self.sessions:
+            self.sessions[user_id] = {
+                'messages': [],
+                'partial_data': {},
+                'last_updated': datetime.utcnow()
+            }
+        return self.sessions[user_id]
+
+    def add_message(self, user_id: str, message: str):
+        """대화 기록 추가"""
+        session = self.get_or_create(user_id)
+        session['messages'].append({
+            'text': message,
+            'timestamp': datetime.utcnow()
+        })
+        session['last_updated'] = datetime.utcnow()
+
+        # 최근 10개 메시지만 유지
+        session['messages'] = session['messages'][-10:]
+
+    def set_partial_data(self, user_id: str, data: dict):
+        """부분 정보 저장"""
+        session = self.get_or_create(user_id)
+        session['partial_data'] = data
+        session['last_updated'] = datetime.utcnow()
+
+    def get_context(self, user_id: str):
+        """대화 맥락 가져오기"""
+        session = self.get_or_create(user_id)
+
+        # 5분 이상 지난 세션은 초기화
+        if (datetime.utcnow() - session['last_updated']).seconds > 300:
+            self.clear(user_id)
+            return None
+
+        return {
+            'messages': session['messages'],
+            'partial_data': session['partial_data']
+        }
+
+    def clear(self, user_id: str):
+        """세션 초기화"""
+        if user_id in self.sessions:
+            del self.sessions[user_id]
+
+
 class AttendanceTelegramBot:
     """출결 관리 텔레그램 봇"""
 
@@ -25,6 +78,7 @@ class AttendanceTelegramBot:
             raise ValueError("TELEGRAM_BOT_TOKEN environment variable is required")
 
         self.parser = ClaudeMessageParser()
+        self.conversation = ConversationSession()  # 대화 세션 관리
         self.application = Application.builder().token(self.bot_token).build()
 
         # 핸들러 등록
@@ -160,27 +214,38 @@ class AttendanceTelegramBot:
         """일반 메시지 처리"""
         user = update.effective_user
         message_text = update.message.text
+        telegram_user_id = str(user.id)
 
         logger.info(f"Received message from {user.id}: {message_text}")
 
         db = SessionLocal()
         try:
-            # Claude AI로 메시지 파싱
-            extracted_data, error = self.parser.parse_attendance_message(message_text)
+            # 대화 맥락 가져오기
+            conversation_context = self.conversation.get_context(telegram_user_id)
+
+            # Claude AI로 메시지 파싱 (맥락 포함)
+            extracted_data, error = self.parser.parse_attendance_message(message_text, conversation_context)
 
             # 텔레그램 메시지 로그 저장
             telegram_message = TelegramMessage(
                 telegram_user_id=str(user.id),
                 message_text=message_text,
-                extracted_data=json.dumps(extracted_data.dict()) if extracted_data else None,
+                extracted_data=json.dumps(extracted_data.model_dump()) if extracted_data else None,
                 extraction_success=extracted_data is not None,
                 error_message=error
             )
             db.add(telegram_message)
             db.commit()
 
+            # 대화 기록 저장
+            self.conversation.add_message(telegram_user_id, message_text)
+
             if error or not extracted_data:
-                # 추출 실패 - 재요청 메시지 전송
+                # 추출 실패 - 부분 정보 저장 및 재요청 메시지 전송
+                if extracted_data:
+                    # 부분 정보라도 저장
+                    self.conversation.set_partial_data(telegram_user_id, extracted_data.model_dump())
+
                 clarification = self.parser.generate_clarification_message(message_text, error or "알 수 없는 오류")
                 await update.message.reply_text(clarification)
                 return
@@ -282,7 +347,7 @@ class AttendanceTelegramBot:
                     attendance_reason=attendance_reason_map[extracted_data.attendance_reason],
                     approval_status=ApprovalStatus.PENDING,
                     original_message=message_text,
-                    extraction_log=json.dumps(extracted_data.dict(), ensure_ascii=False)
+                    extraction_log=json.dumps(extracted_data.model_dump(), ensure_ascii=False)
                 )
 
                 db.add(attendance_record)
