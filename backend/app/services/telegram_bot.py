@@ -316,7 +316,7 @@ class AttendanceTelegramBot:
                 # 기간인 경우
                 success_message = (
                     f"✅ 출결 정보가 접수되었습니다!\n\n"
-                    f"👤 학생: {extracted_data.student_name}\n"
+                    f"👤 학생: {student.name}\n"
                     f"📅 기간: {extracted_data.date} ~ {extracted_data.end_date} ({len(dates_to_process)}일)\n"
                     f"📝 출결 타입: {extracted_data.attendance_type}\n"
                     f"📋 사유: {extracted_data.attendance_reason}\n\n"
@@ -326,7 +326,7 @@ class AttendanceTelegramBot:
                 # 단일 날짜인 경우
                 success_message = (
                     f"✅ 출결 정보가 접수되었습니다!\n\n"
-                    f"👤 학생: {extracted_data.student_name}\n"
+                    f"👤 학생: {student.name}\n"
                     f"📅 날짜: {extracted_data.date}\n"
                     f"📝 출결 타입: {extracted_data.attendance_type}\n"
                     f"📋 사유: {extracted_data.attendance_reason}\n\n"
