@@ -1,5 +1,6 @@
 import os
 import json
+import time
 from datetime import datetime, timedelta
 from anthropic import Anthropic
 from typing import Optional
@@ -387,15 +388,37 @@ class ClaudeMessageParser:
 이제 위 메시지를 분석하여 JSON만 반환하세요. 다른 설명은 필요 없습니다.
 """
 
+        # API 호출 재시도 로직 (과부하 에러 대응)
+        max_retries = 3
+        retry_delay = 1  # 초 단위
+
+        for attempt in range(max_retries):
+            try:
+                response = self.client.messages.create(
+                    model="claude-3-haiku-20240307",  # Haiku (개선된 프롬프트 사용)
+                    max_tokens=1024,
+                    messages=[{
+                        "role": "user",
+                        "content": prompt
+                    }]
+                )
+                break  # 성공하면 루프 탈출
+
+            except Exception as api_error:
+                # 과부하 에러(529) 또는 재시도 가능한 에러 체크
+                error_message = str(api_error)
+                is_retryable = "overloaded" in error_message.lower() or "529" in error_message
+
+                if is_retryable and attempt < max_retries - 1:
+                    # 재시도 가능하고 마지막 시도가 아니면 대기 후 재시도
+                    wait_time = retry_delay * (2 ** attempt)  # 지수 백오프: 1초, 2초, 4초
+                    print(f"[INFO] API 과부하 감지. {wait_time}초 후 재시도... (시도 {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    # 재시도 불가능하거나 마지막 시도면 에러 발생
+                    raise
+
         try:
-            response = self.client.messages.create(
-                model="claude-3-haiku-20240307",  # Haiku (개선된 프롬프트 사용)
-                max_tokens=1024,
-                messages=[{
-                    "role": "user",
-                    "content": prompt
-                }]
-            )
 
             # 응답에서 JSON 추출
             response_text = response.content[0].text.strip()
