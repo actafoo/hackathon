@@ -104,6 +104,7 @@ class DocumentSubmissionUpdate(BaseModel):
 
 class DocumentSubmission(DocumentSubmissionBase):
     id: int
+    attendance_record_id: Optional[int] = None
     is_submitted: bool
     submitted_at: Optional[datetime]
     reminder_sent: bool
