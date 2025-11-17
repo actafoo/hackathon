@@ -3,6 +3,10 @@ set -e
 
 echo "Starting backend services..." >&2
 
+# uploads 디렉토리 생성
+mkdir -p uploads
+echo "Created uploads directory" >&2
+
 # 백엔드 API 서버 시작
 echo "Starting API server on port $PORT..." >&2
 uvicorn app.main:app --host 0.0.0.0 --port $PORT 2>&1 &

@@ -127,6 +127,8 @@ class ExtractedAttendanceData(BaseModel):
     attendance_type: Optional[str] = Field(default=None, description="출결 타입: 결석, 조퇴, 지각 중 하나")
     attendance_reason: Optional[str] = Field(default=None, description="출결 사유: 질병, 미인정, 출석인정 중 하나")
     confidence: float = Field(description="추출 신뢰도 (0.0 ~ 1.0)", ge=0.0, le=1.0)
+    clarification_needed: Optional[bool] = Field(default=False, description="추가 질문이 필요한지 여부")
+    clarification_question: Optional[str] = Field(default=None, description="사용자에게 할 추가 질문")
 
 
 class TelegramMessageResponse(BaseModel):

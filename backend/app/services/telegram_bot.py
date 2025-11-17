@@ -87,6 +87,10 @@ class AttendanceTelegramBot:
 
         logger.info(f"Received photo from {telegram_user_id}")
 
+        # uploads 디렉토리가 없으면 생성
+        import os
+        os.makedirs("uploads", exist_ok=True)
+
         db = SessionLocal()
         try:
             # 이 telegram_id로 등록된 학생의 학부모인지 확인
