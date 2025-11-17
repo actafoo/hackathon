@@ -33,6 +33,18 @@ class ClaudeMessageParser:
         tomorrow_str = tomorrow.strftime("%Y-%m-%d")
         three_days_later = (tomorrow + timedelta(days=2)).strftime("%Y-%m-%d")
 
+        # 요일 정보 (한글)
+        weekday_names = ["월요일", "화요일", "수요일", "목요일", "금요일", "토요일", "일요일"]
+        today_weekday = weekday_names[today.weekday()]
+
+        # 다음주 금요일 계산 (금요일 = 4)
+        # 먼저 이번주/다음 금요일을 찾고, 거기에 7일을 더함
+        days_until_this_friday = (4 - today.weekday()) % 7
+        if days_until_this_friday == 0:  # 오늘이 금요일
+            days_until_this_friday = 7
+        days_until_next_friday = days_until_this_friday + 7
+        next_friday = (today + timedelta(days=days_until_next_friday)).strftime("%Y-%m-%d")
+
         prompt = f"""당신은 초등학교 출결 관리 담당자입니다. 학생이나 학부모가 보낸 메시지를 읽고 출결 정보와 요청 의도를 파악해주세요.
 
 메시지: "{message}"
@@ -56,12 +68,20 @@ class ClaudeMessageParser:
    - "길동", "길동이", "철수" 같은 이름만 (성 없이)
    - "~이" 형태도 인식 (예: "영희", "영희이" → "영희")
    - **update/cancel 시 학생 이름이 없으면 null 또는 빈 문자열("")로 설정**
-   - create 시에는 학생 이름이 반드시 필요
+   - **"에도", "또", "다시", "계속" 같은 단어가 있으면**:
+     * 이전 기록 참조를 의미하므로 student_name은 null 또는 빈 문자열("")로 설정
+     * 예: "다음주 금요일에도 못가요" → student_name: "", 신뢰도는 0.8 이상 (날짜와 상황은 명확)
+   - create 시 이름이 없으면 보통 신뢰도를 낮춰야 하지만, "에도/또/다시" 같은 단어가 있으면 예외
 
 2. **날짜 및 기간**:
-   - "오늘", "내일", "어제" 등의 표현을 오늘 기준 날짜로 변환해주세요 (오늘: {today_str})
+   - **오늘 날짜**: {today_str} ({today_weekday})
+   - "오늘", "내일", "어제" 등의 표현을 오늘 기준 날짜로 변환해주세요
    - 날짜가 없으면 오늘로 가정합니다
    - "11/20", "11월 20일" 등은 2025-11-20으로 변환
+   - **요일 계산 (매우 중요!)**:
+     * "다음주 금요일" → {next_friday} (오늘이 {today_weekday}이므로 다음주 금요일은 {next_friday})
+     * "이번주 금요일" → 이번주 남은 금요일 날짜
+     * "금요일" → 명확하지 않으면 가장 가까운 미래의 금요일
    - **기간 인식**:
      * "내일부터 3일간" → date: {tomorrow_str}, end_date: {three_days_later} (3일간)
      * "금요일까지" → date: 오늘, end_date: 다음 금요일
@@ -171,10 +191,14 @@ class ClaudeMessageParser:
             # 신뢰도 체크 (엄격하게)
             confidence = data.get("confidence", 0)
 
+            # "에도", "또", "다시" 같은 키워드가 있으면 이전 기록 참조이므로 이름 없어도 OK
+            reference_keywords = ["에도", "또", "다시", "계속"]
+            has_reference_keyword = any(keyword in message for keyword in reference_keywords)
+
             if confidence < 0.7:
                 # 신뢰도가 낮은 경우 구체적인 안내 제공
                 missing_info = []
-                if not data.get("student_name"):
+                if not data.get("student_name") and not has_reference_keyword:
                     missing_info.append("학생 이름")
                 if not data.get("attendance_type"):
                     missing_info.append("출결 상황 (결석/지각/조퇴)")
