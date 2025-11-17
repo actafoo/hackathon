@@ -1,5 +1,6 @@
 import os
 import json
+from datetime import datetime, timedelta
 from anthropic import Anthropic
 from typing import Optional
 from ..schemas import ExtractedAttendanceData
@@ -24,6 +25,13 @@ class ClaudeMessageParser:
         Returns:
             (추출된 데이터, 에러 메시지)
         """
+
+        # 현재 날짜 계산
+        today = datetime.now().date()
+        tomorrow = today + timedelta(days=1)
+        today_str = today.strftime("%Y-%m-%d")
+        tomorrow_str = tomorrow.strftime("%Y-%m-%d")
+        three_days_later = (tomorrow + timedelta(days=2)).strftime("%Y-%m-%d")
 
         prompt = f"""당신은 초등학교 출결 관리 담당자입니다. 학생이나 학부모가 보낸 메시지를 읽고 출결 정보와 요청 의도를 파악해주세요.
 
@@ -51,11 +59,11 @@ class ClaudeMessageParser:
    - create 시에는 학생 이름이 반드시 필요
 
 2. **날짜 및 기간**:
-   - "오늘", "내일", "어제" 등의 표현을 오늘 기준 날짜로 변환해주세요 (오늘: 2025-11-15)
+   - "오늘", "내일", "어제" 등의 표현을 오늘 기준 날짜로 변환해주세요 (오늘: {today_str})
    - 날짜가 없으면 오늘로 가정합니다
    - "11/20", "11월 20일" 등은 2025-11-20으로 변환
    - **기간 인식**:
-     * "내일부터 3일간" → date: 2025-11-16, end_date: 2025-11-18 (3일간)
+     * "내일부터 3일간" → date: {tomorrow_str}, end_date: {three_days_later} (3일간)
      * "금요일까지" → date: 오늘, end_date: 다음 금요일
      * "11/20부터 11/22까지" → date: 2025-11-20, end_date: 2025-11-22
      * "월요일부터 수요일까지" → date: 다음 월요일, end_date: 다음 수요일
@@ -99,15 +107,14 @@ class ClaudeMessageParser:
 **예시:**
 
 **create (출결 등록):**
-- "홍길동 아파요" → intent: "create", student_name: "홍길동", date: "2025-11-15", attendance_type: "결석", attendance_reason: "질병"
-- "철수 늦습니다" → intent: "create", student_name: "철수", date: "2025-11-15", attendance_type: "지각", attendance_reason: "미인정"
-- "주선이 내일부터 3일간 체험학습갑니다" → intent: "create", student_name: "주선", date: "2025-11-16", end_date: "2025-11-18", attendance_type: "결석", attendance_reason: "출석인정"
+- "홍길동 아파요" → intent: "create", student_name: "홍길동", date: "{today_str}", attendance_type: "결석", attendance_reason: "질병"
+- "철수 늦습니다" → intent: "create", student_name: "철수", date: "{today_str}", attendance_type: "지각", attendance_reason: "미인정"
+- "주선이 내일부터 3일간 체험학습갑니다" → intent: "create", student_name: "주선", date: "{tomorrow_str}", end_date: "{three_days_later}", attendance_type: "결석", attendance_reason: "출석인정"
 
 **update (수정):**
 - "아까 잘못 보냈어요. 영희 결석이 아니라 지각이에요" → intent: "update", student_name: "영희", attendance_type: "지각"
-- "수정해주세요. 홍길동 내일이 아니라 오늘이에요" → intent: "update", student_name: "홍길동", date: "2025-11-15"
+- "수정해주세요. 홍길동 내일이 아니라 오늘이에요" → intent: "update", student_name: "홍길동", date: "{today_str}"
 - "철수 질병으로 바꿔주세요" → intent: "update", student_name: "철수", attendance_reason: "질병"
-- "13일로 수정해주세요" → intent: "update", student_name: "", date: "2025-11-13"
 - "지각으로 바꿔주세요" → intent: "update", student_name: "", attendance_type: "지각"
 
 **cancel (취소):**
