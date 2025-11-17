@@ -250,6 +250,12 @@ class AttendanceTelegramBot:
                 await update.message.reply_text(clarification)
                 return
 
+            # 출결 메시지가 아닌 경우 (일반 질문, 인사 등)
+            if extracted_data.intent is None or extracted_data.intent == "" or extracted_data.intent == "null":
+                response_message = extracted_data.clarification_question if extracted_data.clarification_question else "무엇을 도와드릴까요?"
+                await update.message.reply_text(response_message)
+                return
+
             # 학생 찾기 로직
             student = None
             telegram_user_id = str(user.id)
