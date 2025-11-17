@@ -44,10 +44,16 @@ const AttendanceModal = ({ selectedCell, onClose }) => {
         params: { student_id: student.id }
       })
       // 이 출결 기록과 연결된 서류만 필터링
-      const relatedDocs = response.data.filter(doc =>
-        doc.attendance_record_id === record.record_id ||
-        (doc.date === record.date && doc.student_id === student.id)
-      )
+      const relatedDocs = response.data.filter(doc => {
+        // attendance_record_id로 직접 매칭
+        if (doc.attendance_record_id === record.record_id) {
+          return true
+        }
+        // 날짜로 매칭 (날짜만 비교, 시간은 무시)
+        const docDate = new Date(doc.date).toISOString().split('T')[0]
+        const recordDate = new Date(record.date).toISOString().split('T')[0]
+        return docDate === recordDate && doc.student_id === student.id
+      })
       setDocuments(relatedDocs)
     } catch (error) {
       console.error('서류 정보 로드 실패:', error)
