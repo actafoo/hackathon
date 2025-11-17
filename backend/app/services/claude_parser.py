@@ -68,10 +68,11 @@ class ClaudeMessageParser:
    - "길동", "길동이", "철수" 같은 이름만 (성 없이)
    - "~이" 형태도 인식 (예: "영희", "영희이" → "영희")
    - **update/cancel 시 학생 이름이 없으면 null 또는 빈 문자열("")로 설정**
-   - **"에도", "또", "다시", "계속" 같은 단어가 있으면**:
-     * 이전 기록 참조를 의미하므로 student_name은 null 또는 빈 문자열("")로 설정
-     * 예: "다음주 금요일에도 못가요" → student_name: "", 신뢰도는 0.8 이상 (날짜와 상황은 명확)
-   - create 시 이름이 없으면 보통 신뢰도를 낮춰야 하지만, "에도/또/다시" 같은 단어가 있으면 예외
+   - **"에도", "도", "또", "다시", "계속" 같은 단어가 있으면**:
+     * 이전 기록 참조를 의미하므로 student_name과 attendance_reason은 null 또는 빈 문자열("")로 설정
+     * 예: "다음주 금요일에도 못가요" → student_name: "", attendance_reason: null, 신뢰도 0.8+
+     * 예: "내일도 결석이에요" → student_name: "", attendance_reason: null, 신뢰도 0.8+
+   - create 시 이름/사유가 없으면 보통 신뢰도를 낮춰야 하지만, "에도/도/또/다시" 같은 단어가 있으면 예외
 
 2. **날짜 및 기간** (반드시 아래 정보를 정확히 사용하세요!):
    - **🔴 오늘**: {today_str} ({today_weekday})
@@ -150,9 +151,10 @@ class ClaudeMessageParser:
 - "홍길동 아파요" → intent: "create", student_name: "홍길동", date: "{today_str}", attendance_type: "결석", attendance_reason: "질병", confidence: 0.9
 - "철수 늦습니다" → intent: "create", student_name: "철수", date: "{today_str}", attendance_type: "지각", attendance_reason: "미인정", confidence: 0.85
 - "주선이 내일부터 3일간 체험학습갑니다" → intent: "create", student_name: "주선", date: "{tomorrow_str}", end_date: "{three_days_later}", attendance_type: "결석", attendance_reason: "출석인정", confidence: 0.9
-- "다음주 금요일에도 못가요" → intent: "create", student_name: "", date: "{next_friday}", attendance_type: "결석", attendance_reason: "미인정", confidence: 0.8 (이름 없지만 "에도" 키워드로 참조)
-- "또 아파요" → intent: "create", student_name: "", date: "{today_str}", attendance_type: "결석", attendance_reason: "질병", confidence: 0.8 (이름 없지만 "또" 키워드로 참조)
-- "내일도 못가요" → intent: "create", student_name: "", date: "{tomorrow_str}", attendance_type: "결석", attendance_reason: "미인정", confidence: 0.8 (이름 없지만 "도" 키워드로 참조)
+- "다음주 금요일에도 못가요" → intent: "create", student_name: "", date: "{next_friday}", attendance_type: "결석", attendance_reason: null, confidence: 0.8 (이름/사유 없지만 "에도" 키워드로 참조)
+- "또 아파요" → intent: "create", student_name: "", date: "{today_str}", attendance_type: "결석", attendance_reason: "질병", confidence: 0.8 (이름 없지만 "또" 키워드로 참조, 사유는 "아파요"로 명확)
+- "내일도 결석이에요" → intent: "create", student_name: "", date: "{tomorrow_str}", attendance_type: "결석", attendance_reason: null, confidence: 0.8 (이름/사유 없지만 "도" 키워드로 참조)
+- "길동이 내일도 결석이에요" → intent: "create", student_name: "길동", date: "{tomorrow_str}", attendance_type: "결석", attendance_reason: null, confidence: 0.8 (사유 없지만 "도" 키워드로 참조)
 
 **update (수정):**
 - "아까 잘못 보냈어요. 영희 결석이 아니라 지각이에요" → intent: "update", student_name: "영희", attendance_type: "지각"
@@ -214,8 +216,8 @@ class ClaudeMessageParser:
             # 신뢰도 체크 (엄격하게)
             confidence = data.get("confidence", 0)
 
-            # "에도", "또", "다시" 같은 키워드가 있으면 이전 기록 참조이므로 이름 없어도 OK
-            reference_keywords = ["에도", "또", "다시", "계속"]
+            # "에도", "도", "또", "다시" 같은 키워드가 있으면 이전 기록 참조이므로 이름/사유 없어도 OK
+            reference_keywords = ["에도", "도", "또", "다시", "계속"]
             has_reference_keyword = any(keyword in message for keyword in reference_keywords)
 
             if confidence < 0.7:
@@ -225,7 +227,7 @@ class ClaudeMessageParser:
                     missing_info.append("학생 이름")
                 if not data.get("attendance_type"):
                     missing_info.append("출결 상황 (결석/지각/조퇴)")
-                if not data.get("attendance_reason"):
+                if not data.get("attendance_reason") and not has_reference_keyword:
                     missing_info.append("사유 (아파서/체험학습/개인사정 등)")
 
                 if missing_info:
@@ -241,7 +243,7 @@ class ClaudeMessageParser:
             if extracted_data.intent not in valid_intents:
                 return None, f"올바르지 않은 의도입니다: {extracted_data.intent}"
 
-            # 출결 타입과 사유 검증 (create인 경우 필수)
+            # 출결 타입과 사유 검증 (create인 경우 필수, 단 참조 키워드가 있으면 사유 없어도 OK)
             if extracted_data.intent == "create":
                 valid_types = ["결석", "조퇴", "지각"]
                 valid_reasons = ["질병", "미인정", "출석인정"]
@@ -249,8 +251,10 @@ class ClaudeMessageParser:
                 if not extracted_data.attendance_type or extracted_data.attendance_type not in valid_types:
                     return None, f"출결 등록 시 올바른 출결 타입이 필요합니다"
 
-                if not extracted_data.attendance_reason or extracted_data.attendance_reason not in valid_reasons:
-                    return None, f"출결 등록 시 올바른 출결 사유가 필요합니다"
+                # 참조 키워드가 없으면 사유 필수
+                if not has_reference_keyword:
+                    if not extracted_data.attendance_reason or extracted_data.attendance_reason not in valid_reasons:
+                        return None, f"출결 등록 시 올바른 출결 사유가 필요합니다"
 
             # update/cancel인 경우 타입과 사유는 선택사항이므로 검증 스킵
 
