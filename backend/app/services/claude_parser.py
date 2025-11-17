@@ -188,7 +188,7 @@ class ClaudeMessageParser:
 
         try:
             response = self.client.messages.create(
-                model="claude-3-5-sonnet-20241022",  # 더 강력한 모델 사용
+                model="claude-3-haiku-20240307",  # Haiku (개선된 프롬프트 사용)
                 max_tokens=1024,
                 messages=[{
                     "role": "user",
