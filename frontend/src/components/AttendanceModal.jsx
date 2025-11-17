@@ -6,7 +6,8 @@ import {
   rejectAttendanceRecord,
   createAttendanceRecord,
   markDocumentSubmitted,
-  deleteAttendanceRecord
+  deleteAttendanceRecord,
+  sendIndividualReminder
 } from '../services/api'
 import axios from 'axios'
 
@@ -60,6 +61,17 @@ const AttendanceModal = ({ selectedCell, onClose }) => {
       await markDocumentSubmitted(docId)
       alert('서류가 제출 완료로 표시되었습니다.')
       loadDocuments() // 새로고침
+    } catch (error) {
+      alert('오류가 발생했습니다: ' + error.message)
+    }
+  }
+
+  const handleSendReminder = async () => {
+    if (!confirm(`${student.name} 학생 학부모님께 서류 제출 독려 메시지를 발송하시겠습니까?`)) return
+
+    try {
+      const result = await sendIndividualReminder(student.id)
+      alert(`독려 메시지 발송 완료!\n성공: ${result.sent_count}건, 실패: ${result.failed_count}건`)
     } catch (error) {
       alert('오류가 발생했습니다: ' + error.message)
     }
@@ -275,7 +287,18 @@ const AttendanceModal = ({ selectedCell, onClose }) => {
             <div>
               {record && documents.length > 0 ? (
                 <div style={{ padding: '12px', background: '#f0f7ff', borderRadius: '8px', border: '1px solid #b3d9ff' }}>
-                  <strong style={{ display: 'block', marginBottom: '12px', fontSize: '16px' }}>📎 서류 제출 상태</strong>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                    <strong style={{ fontSize: '16px' }}>📎 서류 제출 상태</strong>
+                    {documents.some(doc => !doc.is_submitted) && (
+                      <button
+                        className="btn btn-warning"
+                        onClick={handleSendReminder}
+                        style={{ fontSize: '12px', padding: '6px 12px' }}
+                      >
+                        📤 독려 메시지 발송
+                      </button>
+                    )}
+                  </div>
                   {documents.map(doc => (
                     <div key={doc.id} style={{
                       padding: '12px',
