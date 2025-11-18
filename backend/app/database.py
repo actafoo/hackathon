@@ -8,9 +8,16 @@ load_dotenv()
 
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./attendance.db")
 
-engine = create_engine(
-    DATABASE_URL, connect_args={"check_same_thread": False}
-)
+# SQLite와 PostgreSQL에 따라 connect_args 설정
+if DATABASE_URL.startswith("sqlite"):
+    # SQLite용 설정
+    engine = create_engine(
+        DATABASE_URL, connect_args={"check_same_thread": False}
+    )
+else:
+    # PostgreSQL 및 기타 DB용 설정
+    engine = create_engine(DATABASE_URL)
+
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
