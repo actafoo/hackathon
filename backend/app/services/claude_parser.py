@@ -395,7 +395,7 @@ class ClaudeMessageParser:
         for attempt in range(max_retries):
             try:
                 response = self.client.messages.create(
-                    model="claude-3-haiku-20240307",  # Haiku (개선된 프롬프트 사용)
+                    model="claude-haiku-4-5-20251001",
                     max_tokens=1024,
                     messages=[{
                         "role": "user",

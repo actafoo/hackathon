@@ -1,125 +1,126 @@
-# 학생 출결 관리 시스템
+> **📌 v1.0 (1차본)** — 보안 체크리스트는 자료집 팀 검토 후 업데이트 예정
 
-AI 기반 텔레그램 봇과 웹 대시보드를 통한 자동화된 출결 관리 플랫폼
+# 🛠️ [프로젝트 이름]
 
-## 배포 URL
+<!-- 💡 AI 힌트: "내 프로젝트 이름은 [이름]이고, 한 줄로 설명하면 [설명]이야. 교사가 만든 웹앱이고 [대상]이 사용해. 위의 제목과 아래 뱃지 3개를 채워줘." -->
 
-- **프론트엔드 (Vercel)**: https://frontend-4w30j0oi5-actafoos-projects.vercel.app
-- **백엔드 API (Fly.io)**: https://backend-aged-summit-5682.fly.dev
-- **GitHub**: https://github.com/actafoo/hackathon
-- **Telegram bot** : https://t.me/HS_AttendBot
+<!-- 뱃지: 실제 URL로 교체하세요 -->
+[![서비스 바로가기](https://img.shields.io/badge/🚀_서비스_바로가기-4A90D9?style=for-the-badge)](https://your-service-url.com)
+[![GitHub](https://img.shields.io/badge/GitHub_코드보기-181717?style=for-the-badge&logo=github)](https://github.com/your-repo)
+[![Made with AI](https://img.shields.io/badge/Made_with-AI_바이브코딩-blueviolet?style=for-the-badge)](https://claude.ai)
 
-## 주요 기능
+> **한 문장 소개**: [이 서비스가 무엇을 해결하는지 딱 한 문장으로.]
 
-### 1. 텔레그램 봇 기반 출결 신고
-- **AI 자동 파싱**: Claude AI가 자연어 메시지에서 출결 정보 자동 추출
-- **간편한 사용**: "주선이 오늘 아파요" 같은 자연스러운 메시지로 출결 신고
-- **서류 제출**: 사진 전송으로 간편한 서류 제출
-- **자동 학부모 등록**: 첫 메시지 발송 시 자동으로 학부모-학생 연결
+---
 
-### 2. 웹 대시보드
-- **월별 출결 현황**: 달력 형태의 직관적인 출결 그리드
-- **실시간 통계**: 전체 학생, 출결 기록, 승인 대기, 서류 미제출 현황
-- **승인 프로세스**: 출결 기록 승인/거부/수정 기능
-- **학생 관리**: 학생 정보 및 학부모 연락처 관리
-- **인쇄 기능**: 출결표 인쇄 및 PDF 저장
+## 😤 어떤 불편함에서 시작했나요?
 
-### 3. 출결 상태 시스템 (9가지)
-타입(결석/지각/조퇴) × 사유(질병/미인정/출석인정):
+<!-- 💡 AI 힌트: "나는 [학교급/교과/업무] 담당 교사야. [구체적인 상황]이 반복되면서 [얼마나 걸리거나 얼마나 힘들었는지]가 문제였어. 이걸 교사 독자가 고개를 끄덕일 수 있게 2~3문장으로 써줘." -->
 
-| 기호 | 의미 |
+매일 반복되는 [업무명]에 [시간/에너지]를 쓰고 있었습니다.  
+[구체적인 상황 묘사 — 숫자나 장면이 있으면 더 좋습니다.]  
+이 문제를 해결하기 위해 직접 만들었습니다.
+
+---
+
+## ✨ 주요 기능
+
+<!-- 💡 AI 힌트: "핵심 기능 3~4가지를 표로 정리해줘. 기능명, 한 줄 설명 형식으로. 기술 용어보다 사용자 행동 중심으로 써줘. 예: '자연어로 출결 신고' → '학부모가 카카오톡처럼 말하면 AI가 자동으로 파악'" -->
+
+| 기능 | 설명 |
 |------|------|
-| ♡ | 질병결석 |
-| # | 질병지각 |
-| ＠ | 질병조퇴 |
-| 🖤 | 미인정결석 |
-| × | 미인정지각 |
-| ◎ | 미인정조퇴 |
-| △ | 출석인정결석 (현장체험학습 등) |
-| ◁ | 출석인정지각 |
-| ▷ | 출석인정조퇴 |
+| [기능 1] | [사용자 입장에서 한 줄 설명] |
+| [기능 2] | [사용자 입장에서 한 줄 설명] |
+| [기능 3] | [사용자 입장에서 한 줄 설명] |
 
-## 기술 스택
+---
 
-| 구분 | 기술 |
-|------|------|
-| Backend | Python 3.10, FastAPI, SQLAlchemy, PostgreSQL |
-| Frontend | React 18, Vite, Axios, Day.js |
-| AI | Anthropic Claude API (Haiku) |
-| Bot | python-telegram-bot |
-| 배포 | Fly.io (백엔드), Vercel (프론트엔드) |
+## 🖥️ 화면 미리보기
 
-## 로컬 개발 환경 설정
+<!-- 💡 AI 힌트: 이 항목은 AI가 채울 수 없어요. 스크린샷 1~2장을 직접 캡처해서 아래 형식으로 추가하세요. -->
+<!-- ![메인 화면](./screenshots/main.png) -->
 
-### 사전 요구사항
-- Python 3.10 이상
-- Node.js 16 이상
-- Telegram Bot Token
-- Anthropic API Key
+> 📸 스크린샷을 `screenshots/` 폴더에 넣고 위 주석을 해제하세요.
 
-### 백엔드
-```bash
-cd backend
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-pip install -r requirements.txt
-cp .env.example .env
-# .env 파일에 TELEGRAM_BOT_TOKEN, ANTHROPIC_API_KEY 설정
+---
 
-# API 서버 실행 (포트 8000)
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+## 👩‍🏫 실제로 써보니
 
-# 텔레그램 봇 실행 (별도 터미널)
-python run_bot.py
+<!-- 💡 AI 힌트: "이 서비스를 실제로 쓰거나 시범 적용해봤을 때 어떤 변화가 있었는지, 또는 기대되는 효과를 솔직하게 써줘. 수치가 있으면 좋고, '기대 효과'여도 괜찮아. 과장하지 말고 현실적으로." -->
 
-# 샘플 데이터 생성 (선택)
-python seed_data.py
-```
+- ✅ [실제 변화 또는 기대 효과 1]
+- ✅ [실제 변화 또는 기대 효과 2]
+- ⚠️ [아직 안 되는 것 / 한계] — 솔직하게 적을수록 신뢰가 올라갑니다.
 
-### 프론트엔드
-```bash
-cd frontend
-npm install
-npm run dev
-```
+---
 
-## 배포
+## 🔧 기술 스택
 
-### 백엔드 (Fly.io)
-```bash
-cd backend
-flyctl auth login
-flyctl deploy
-```
+<!-- 💡 AI 힌트: "내가 사용한 플랫폼과 기술을 뱃지 형식으로 정리해줘. 예: Claude, Cursor, Replit, Google Apps Script, Vercel 등." -->
 
-환경변수는 `flyctl secrets set KEY=VALUE`로 설정.
+![Claude](https://img.shields.io/badge/Claude_AI-D97757?style=flat-square&logo=anthropic&logoColor=white)
+![](https://img.shields.io/badge/[플랫폼명]-[색상코드]?style=flat-square)
 
-### 프론트엔드 (Vercel)
-```bash
-cd frontend
-npx vercel --prod
-```
+| 구분 | 사용 도구 |
+|------|----------|
+| AI 개발 도구 | [예: Claude, Cursor, Gemini] |
+| 프론트엔드 | [예: HTML/CSS, React, Google Sites] |
+| 백엔드/데이터 | [예: Google Sheets, Supabase, Firebase] |
+| 배포 | [예: Vercel, Replit, GitHub Pages] |
 
-`frontend/.env.production`의 `VITE_API_URL`이 백엔드 URL을 가리키는지 확인.
+---
 
-## 사용 방법
+## 🔒 보안 체크리스트
 
-### 학부모 (텔레그램)
-1. 봇과 대화 시작: `/start`
-2. 자연어로 출결 신고:
-   - "주선이 오늘 아파요" → 질병 결석
-   - "철수 늦습니다" → 지각
-   - "영희 현장체험학습" → 출석인정 결석
-3. 서류 제출: 사진 전송
+<!-- 이 항목은 평가에 반영됩니다. 해당 항목에 ✅ 표시하세요. -->
 
-### 교사 (웹 대시보드)
-1. 브라우저에서 프론트엔드 URL 접속
-2. 년도/월 선택하여 출결 현황 확인
-3. 셀 클릭하여 출결 기록 승인/거부/수정
-4. 학생 관리 버튼으로 학생 정보 관리
+- [ ] API 키 등 민감 정보를 코드에 직접 노출하지 않음 (환경변수 사용)
+- [ ] 학생·학부모 개인정보를 수집하는 경우 최소 수집 원칙 적용
+- [ ] 외부에서 접근 가능한 URL이 있는 경우 인증/접근 제어 존재
+- [ ] 사용자 입력값 검증 처리 (SQL Injection, XSS 등 기본 방어)
+- [ ] 해당 없는 항목: [이유 간략히]
 
-## 보안
+---
 
-- `.env` 파일은 절대 GitHub에 올리지 마세요
-- API 키는 Fly.io secrets으로 관리
-- 데이터베이스는 Fly.io PostgreSQL 사용 (자동 백업)
+## 🗺️ 따라 만들기 (선택)
+
+<!-- 💡 AI 힌트: "다른 교사가 이 서비스를 비슷하게 만들려면 어떻게 시작하면 될지, 핵심 프롬프트나 설계 접근법을 3단계로 요약해줘. 코드 복사 수준이 아니라 '나라면 이렇게 기획했을 것' 수준으로." -->
+
+> 이 서비스를 직접 만들어보고 싶다면:
+
+1. **문제 정의**: [핵심 질문 — 어떤 불편함을 해결하려 했나]
+2. **핵심 설계**: [데이터 구조나 주요 로직을 한 문장으로]
+3. **시작 프롬프트 예시**: `"[AI에게 처음 던진 핵심 프롬프트]"`
+
+---
+
+## 💬 만들면서 솔직한 한마디
+
+<!-- 💡 AI 힌트: "해커톤 동안 가장 막혔던 순간, 예상 밖으로 잘 됐던 것, 다음에 꼭 추가하고 싶은 기능을 각각 한 문장씩 써줘. AI가 대신 쓰는 느낌이 아니라 내 말투로." -->
+
+| | |
+|--|--|
+| 😤 가장 막혔던 것 | [예: 카카오톡 API 승인이 해커톤 중엔 불가능했음] |
+| 🎉 예상 밖으로 잘 된 것 | [예: 자연어 파싱 정확도가 생각보다 훨씬 높았음] |
+| 🚀 다음 버전에선 | [예: NEIS 연동으로 최종 처리까지 자동화하고 싶음] |
+
+---
+
+## 👤 만든 사람
+
+<!-- 💡 AI 힌트: 이름, 소속, GitHub 링크만 채워주세요. -->
+
+| | |
+|--|--|
+| 이름 | [이름] |
+| 소속 | [학교명] |
+| GitHub | [@username](https://github.com/username) |
+
+---
+
+<div align="center">
+
+**서울특별시교육청 교사 개발자 해커톤 2026**  
+*교실의 불편함, 교사가 직접 해결한다*
+
+</div>
