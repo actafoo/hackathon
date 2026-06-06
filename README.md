@@ -7,6 +7,7 @@ AI 기반 텔레그램 봇과 웹 대시보드를 통한 자동화된 출결 관
 - **프론트엔드 (Vercel)**: https://frontend-4w30j0oi5-actafoos-projects.vercel.app
 - **백엔드 API (Fly.io)**: https://backend-aged-summit-5682.fly.dev
 - **GitHub**: https://github.com/actafoo/hackathon
+- **Telegram bot** : https://t.me/HS_AttendBot
 
 ## 주요 기능
 
