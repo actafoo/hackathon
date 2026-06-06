@@ -5,9 +5,9 @@
 <!-- 💡 AI 힌트: "내 프로젝트 이름은 [이름]이고, 한 줄로 설명하면 [설명]이야. 교사가 만든 웹앱이고 [대상]이 사용해. 위의 제목과 아래 뱃지 3개를 채워줘." -->
 
 <!-- 뱃지: 실제 URL로 교체하세요 -->
-[![서비스 바로가기](https://img.shields.io/badge/🚀_서비스_바로가기-4A90D9?style=for-the-badge)](https://your-service-url.com)
-[![GitHub](https://img.shields.io/badge/GitHub_코드보기-181717?style=for-the-badge&logo=github)](https://github.com/your-repo)
-[![Made with AI](https://img.shields.io/badge/Made_with-AI_바이브코딩-blueviolet?style=for-the-badge)](https://claude.ai)
+[![서비스 바로가기](https://img.shields.io/badge/🚀_서비스_바로가기-4A90D9?style=for-the-badge)](https://frontend-4w30j0oi5-actafoos-projects.vercel.app/)
+[![GitHub](https://img.shields.io/badge/GitHub_코드보기-181717?style=for-the-badge&logo=github)](https://github.com/actafoo/hackathon)
+[![Made with AI](https://img.shields.io/badge/Made_with-CLAUDE-blueviolet?style=for-the-badge)](https://claude.ai)
 
 > **한 문장 소개**: [이 서비스가 무엇을 해결하는지 딱 한 문장으로.]
 
