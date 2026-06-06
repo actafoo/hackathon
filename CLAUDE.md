@@ -16,13 +16,30 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 6. **월별 현황 표시**: 달력 형태의 대시보드에 출결 현황 시각화
 7. **서류 관리**: 서류 제출 여부 체크 및 미제출 학생에게 독려 메시지 자동 발송
 
+## Deployment
+
+- **Backend**: Fly.io — `https://backend-aged-summit-5682.fly.dev` (app: `backend-aged-summit-5682`, region: nrt)
+- **Frontend**: Vercel — `https://frontend-4w30j0oi5-actafoos-projects.vercel.app` (project: actafoos-projects/frontend)
+- **Database**: Fly.io PostgreSQL (attached as `hackathon-attendance-db`)
+- **Telegram Bot**: runs inside the same Fly.io machine as the API server via `start.sh`
+
+### Deploy commands
+```bash
+# Backend
+cd backend && flyctl deploy
+
+# Frontend
+cd frontend && npx vercel --prod
+```
+
 ## Architecture
 
 ### Backend
-- **Language**: Python
-- **Framework**: FastAPI or Django
+- **Language**: Python 3.10
+- **Framework**: FastAPI
 - **API Design**: RESTful API
-- **AI Integration**: Claude API for message parsing
+- **AI Integration**: Claude API (Haiku) for message parsing
+- **Database**: PostgreSQL (Fly.io) in production, SQLite locally
 
 ### Frontend
 - **Dashboard**: 월별 출결 현황 그리드 UI
@@ -35,6 +52,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Message Reception**: 학생의 출결 메시지 수신
 - **Interactive Response**: AI 추출 실패 시 추가 정보 요청
 - **Notification**: 서류 미제출 학생에게 독려 메시지 발송
+- **실행 방식**: API 서버와 동일 프로세스에서 `start.sh`로 함께 실행 (polling 방식)
 
 ## Key Components
 
