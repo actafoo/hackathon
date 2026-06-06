@@ -3,8 +3,14 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from dotenv import load_dotenv
 from .database import init_db
 from .api.routes import students, attendance, documents, parents
+
+# .env 파일 로드 (앱 시작 전)
+# backend/.env 파일의 절대 경로를 명시적으로 지정
+env_path = Path(__file__).parent.parent / ".env"
+load_dotenv(dotenv_path=env_path)
 
 # uploads 디렉토리 생성 (앱 시작 전)
 UPLOADS_DIR = Path("uploads")

@@ -8,6 +8,7 @@ mkdir -p uploads
 echo "Created uploads directory" >&2
 
 # 백엔드 API 서버 시작
+PORT=${PORT:-8080}
 echo "Starting API server on port $PORT..." >&2
 uvicorn app.main:app --host 0.0.0.0 --port $PORT 2>&1 &
 API_PID=$!

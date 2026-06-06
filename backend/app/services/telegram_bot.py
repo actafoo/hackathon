@@ -281,10 +281,11 @@ class AttendanceTelegramBot:
 
             # 2. 메시지에서 학생 이름을 찾을 수 없는 경우, telegram_user_id로 학부모 찾기
             if not student:
+                # 가장 최근에 등록된 활성화된 학부모를 찾음 (created_at 최신순)
                 parent = db.query(StudentParent).filter(
                     StudentParent.telegram_id == telegram_user_id,
                     StudentParent.is_active == True
-                ).first()
+                ).order_by(StudentParent.created_at.desc()).first()
 
                 if parent:
                     student = db.query(Student).filter(Student.id == parent.student_id).first()
@@ -314,6 +315,22 @@ class AttendanceTelegramBot:
                 await self._handle_update(db, student, extracted_data, message_text, update)
                 return
             # intent == "create"인 경우 아래 기존 로직 실행
+
+            # AI가 잘못 반환한 경우 자동 수정
+            # "출석인정"을 attendance_type으로 반환한 경우 → 결석 + 출석인정으로 변환
+            if extracted_data.attendance_type == "출석인정":
+                logger.warning(f"AI가 attendance_type으로 '출석인정'을 반환했습니다. '결석'으로 자동 수정합니다.")
+                extracted_data.attendance_type = "결석"
+                if not extracted_data.attendance_reason:
+                    extracted_data.attendance_reason = "출석인정"
+
+            # 질병, 미인정도 마찬가지로 처리
+            if extracted_data.attendance_type in ["질병", "미인정"]:
+                logger.warning(f"AI가 attendance_type으로 '{extracted_data.attendance_type}'을 반환했습니다. '결석'으로 자동 수정합니다.")
+                # attendance_reason으로 이동
+                if not extracted_data.attendance_reason:
+                    extracted_data.attendance_reason = extracted_data.attendance_type
+                extracted_data.attendance_type = "결석"
 
             # 출결 타입 매핑
             attendance_type_map = {
@@ -433,13 +450,25 @@ class AttendanceTelegramBot:
     def _register_parent_if_new(self, db: Session, student_id: int, telegram_user_id: str):
         """학부모 자동 등록 (이미 등록되어 있으면 스킵)"""
         try:
+            # 이 telegram_id가 이미 다른 학생에게 등록되어 있는지 확인
+            existing_parent_any = db.query(StudentParent).filter(
+                StudentParent.telegram_id == telegram_user_id,
+                StudentParent.is_active == True
+            ).first()
+
             # 이미 등록된 학부모인지 확인
             existing_parent = db.query(StudentParent).filter(
                 StudentParent.student_id == student_id,
                 StudentParent.telegram_id == telegram_user_id
             ).first()
 
-            if not existing_parent:
+            if existing_parent:
+                # 이미 이 학생에게 등록됨
+                logger.info(f"✓ 이미 등록된 학부모: student_id={student_id}, telegram_id={telegram_user_id}")
+            elif existing_parent_any:
+                # 다른 학생에게 등록되어 있음 - 새로 등록하지 않음
+                logger.warning(f"⚠️ 이 학부모는 이미 다른 학생(student_id={existing_parent_any.student_id})에게 등록되어 있습니다. 중복 등록하지 않습니다.")
+            else:
                 # 새 학부모 등록
                 new_parent = StudentParent(
                     student_id=student_id,
@@ -450,8 +479,6 @@ class AttendanceTelegramBot:
                 db.add(new_parent)
                 db.commit()
                 logger.info(f"✅ 새 학부모 자동 등록: student_id={student_id}, telegram_id={telegram_user_id}")
-            else:
-                logger.info(f"✓ 이미 등록된 학부모: student_id={student_id}, telegram_id={telegram_user_id}")
 
         except Exception as e:
             logger.error(f"학부모 등록 중 오류: {e}")
@@ -510,6 +537,19 @@ class AttendanceTelegramBot:
                 f"먼저 출결 정보를 등록해주세요."
             )
             return
+
+        # AI가 잘못 반환한 경우 자동 수정
+        if extracted_data.attendance_type == "출석인정":
+            logger.warning(f"AI가 attendance_type으로 '출석인정'을 반환했습니다. '결석'으로 자동 수정합니다.")
+            extracted_data.attendance_type = "결석"
+            if not extracted_data.attendance_reason:
+                extracted_data.attendance_reason = "출석인정"
+
+        if extracted_data.attendance_type in ["질병", "미인정"]:
+            logger.warning(f"AI가 attendance_type으로 '{extracted_data.attendance_type}'을 반환했습니다. '결석'으로 자동 수정합니다.")
+            if not extracted_data.attendance_reason:
+                extracted_data.attendance_reason = extracted_data.attendance_type
+            extracted_data.attendance_type = "결석"
 
         # 출결 타입 매핑
         attendance_type_map = {
